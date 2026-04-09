@@ -26,7 +26,9 @@ export default function UploadButton() {
       toast.success('PDF uploaded successfully!')
       setIsOpen(false)
       setFile(null)
-      router.refresh()
+      setTimeout(() => {
+        router.refresh()
+      }, 1500)  
     },
     onUploadError: (error: Error) => {
       console.error("❌ Upload error:", error);
