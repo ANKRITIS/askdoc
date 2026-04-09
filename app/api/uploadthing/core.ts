@@ -1,10 +1,6 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
-import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
-import { pinecone } from "@/lib/pinecone";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 
 const f = createUploadthing();
 
@@ -16,9 +12,6 @@ export const ourFileRouter = {
       return { userId };
     })
     .onUploadComplete(async ({ metadata, file }) => {
-      console.log("--- 1. UPLOAD COMPLETE, STARTING PROCESSING ---");
-      console.log("File URL:", file.ufsUrl);
-
       const createdFile = await db.file.create({
         data: {
           key: file.key,
@@ -28,77 +21,13 @@ export const ourFileRouter = {
           uploadStatus: "PROCESSING",
         },
       });
-      console.log("--- 2. SAVED TO DB ---");
 
-      try {
-        console.log("--- 3. DOWNLOADING PDF ---");
-        const response = await fetch(file.ufsUrl);
-        const blob = await response.blob();
-        console.log("Blob size:", blob.size);
-
-        console.log("--- 4. LOADING PDF TEXT ---");
-        const arrayBuffer = await blob.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const loader = new PDFLoader(new Blob([buffer]));
-        const pageLevelDocs = await loader.load();
-        console.log("Pages found:", pageLevelDocs.length);
-
-        console.log("--- 5. SPLITTING TEXT ---");
-        const textSplitter = new RecursiveCharacterTextSplitter({
-          chunkSize: 1000,
-          chunkOverlap: 200,
-        });
-        const chunkedDocs = await textSplitter.splitDocuments(pageLevelDocs);
-        console.log("Chunks created:", chunkedDocs.length);
-
-        console.log("--- 6. GENERATING EMBEDDINGS (GOOGLE) ---");
-        const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
-        const aiModel = genAI.getGenerativeModel({
-          model: "text-embedding-004",
-        });
-
-        const embeddings = await Promise.all(
-          chunkedDocs.map(async (doc, i) => {
-            if (i < 3) console.log(`Embedding chunk ${i}...`);
-            const result = await aiModel.embedContent(doc.pageContent);
-            const vector = result.embedding.values;
-            return {
-              id: `${createdFile.id}-${i}`,
-              values: vector,
-              metadata: {
-                text: doc.pageContent,
-                fileId: createdFile.id,
-              },
-            };
-          })
-        );
-        console.log("Embeddings generated:", embeddings.length);
-
-        console.log("--- 7. UPLOADING TO PINECONE ---");
-        const index = pinecone.Index("askdoc-final");
-        const batchSize = 100;
-        for (let i = 0; i < embeddings.length; i += batchSize) {
-          const batch = embeddings.slice(i, i + batchSize);
-          await index.namespace(createdFile.id).upsert(batch);
-          console.log(`Uploaded batch ${i / batchSize + 1}`);
-        }
-
-        console.log("--- 8. SUCCESS! ---");
-        await db.file.update({
-          data: { uploadStatus: "SUCCESS" },
-          where: { id: createdFile.id },
-        });
-
-      } catch (err: any) {
-        console.error("!!!!! PROCESSING ERROR !!!!!");
-        console.error(err);
-        console.error("Error stack:", err.stack);
-
-        await db.file.update({
-          data: { uploadStatus: "FAILED" },
-          where: { id: createdFile.id },
-        });
-      }
+      // Trigger processing without awaiting
+      fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/process-pdf`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileId: createdFile.id, fileUrl: file.ufsUrl }),
+      });
     }),
 } satisfies FileRouter;
 
