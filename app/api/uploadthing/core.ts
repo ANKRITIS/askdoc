@@ -75,7 +75,7 @@ export const ourFileRouter = {
         console.log("Embeddings generated:", embeddings.length);
 
         console.log("--- 7. UPLOADING TO PINECONE ---");
-        const index = pinecone.Index("studdy-buddy");
+        const index = pinecone.Index("askdoc-final");
         const batchSize = 100;
         for (let i = 0; i < embeddings.length; i += batchSize) {
           const batch = embeddings.slice(i, i + batchSize);
