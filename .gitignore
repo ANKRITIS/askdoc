@@ -140,3 +140,10 @@ vite.config.ts.timestamp-*
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+node_modules/
+.next/
+.env
+.idea/
+*.keystore
+*.pub
