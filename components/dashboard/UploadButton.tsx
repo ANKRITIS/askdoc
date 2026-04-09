@@ -27,8 +27,8 @@ export default function UploadButton() {
       setIsOpen(false)
       setFile(null)
       setTimeout(() => {
-        router.refresh()
-      }, 1500)  
+        window.location.reload()
+      }, 1500)
     },
     onUploadError: (error: Error) => {
       console.error("❌ Upload error:", error);
