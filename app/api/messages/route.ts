@@ -34,7 +34,7 @@ export const POST = async (req: NextRequest) => {
 
     console.log("🔍 Creating embedding for query...");
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
-    const embeddingModel = genAI.getGenerativeModel({ model: "embedding-001" });
+    const embeddingModel = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
 
     const embeddingResult = await embeddingModel.embedContent(message);
     const queryVector = embeddingResult.embedding.values;
