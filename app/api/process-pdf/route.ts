@@ -4,7 +4,6 @@ import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { pinecone } from "@/lib/pinecone";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
-import { text } from "stream/consumers";
 
 export const maxDuration = 60;
 
@@ -34,11 +33,14 @@ export async function POST(req: NextRequest) {
 
     console.log("--- GENERATING EMBEDDINGS ---");
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
-    const aiModel = genAI.getGenerativeModel({ model: "models/text-embedding-004" });
+    const aiModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
 
     const embeddings = await Promise.all(
       chunkedDocs.map(async (doc, i) => {
-        const result = await aiModel.embedContent(doc.pageContent);
+        const result = await aiModel.embedContent({
+          content: { parts: [{ text: doc.pageContent }], role: "user" },
+        });
+        if (i < 3) console.log(`Embedding chunk ${i} done`);
         return {
           id: `${fileId}-${i}`,
           values: result.embedding.values,
