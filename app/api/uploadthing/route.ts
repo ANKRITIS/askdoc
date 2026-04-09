@@ -7,3 +7,5 @@ export const { GET, POST } = createRouteHandler({
     token: process.env.UPLOADTHING_TOKEN,
   },
 })
+
+export const maxDuration = 60
