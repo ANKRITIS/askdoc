@@ -9,20 +9,21 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   const { fileId, fileUrl } = await req.json();
+  console.log("--- PROCESSING PDF:", fileId, "---");
 
   try {
-    console.log("--- 1. DOWNLOADING PDF ---");
+    console.log("--- DOWNLOADING PDF ---");
     const response = await fetch(fileUrl);
     const blob = await response.blob();
     const arrayBuffer = await blob.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    console.log("--- 2. LOADING PDF TEXT ---");
+    console.log("--- LOADING PDF TEXT ---");
     const loader = new PDFLoader(new Blob([buffer]));
     const pageLevelDocs = await loader.load();
     console.log("Pages found:", pageLevelDocs.length);
 
-    console.log("--- 3. SPLITTING TEXT ---");
+    console.log("--- SPLITTING TEXT ---");
     const textSplitter = new RecursiveCharacterTextSplitter({
       chunkSize: 1000,
       chunkOverlap: 200,
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
     const chunkedDocs = await textSplitter.splitDocuments(pageLevelDocs);
     console.log("Chunks created:", chunkedDocs.length);
 
-    console.log("--- 4. GENERATING EMBEDDINGS ---");
+    console.log("--- GENERATING EMBEDDINGS ---");
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
     const aiModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
 
@@ -46,14 +47,14 @@ export async function POST(req: NextRequest) {
     );
     console.log("Embeddings generated:", embeddings.length);
 
-    console.log("--- 5. UPLOADING TO PINECONE ---");
+    console.log("--- UPLOADING TO PINECONE ---");
     const index = pinecone.Index(process.env.PINECONE_INDEX!);
     const batchSize = 100;
     for (let i = 0; i < embeddings.length; i += batchSize) {
       await index.namespace(fileId).upsert(embeddings.slice(i, i + batchSize));
     }
 
-    console.log("--- 6. SUCCESS ---");
+    console.log("--- SUCCESS ---");
     await db.file.update({
       data: { uploadStatus: "SUCCESS" },
       where: { id: fileId },
@@ -61,7 +62,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("PROCESSING ERROR:", err);
+    console.error("--- PROCESSING ERROR ---", err);
     await db.file.update({
       data: { uploadStatus: "FAILED" },
       where: { id: fileId },
