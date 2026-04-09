@@ -7,7 +7,7 @@ export const geminiModel = genAI.getGenerativeModel({
 })
 
 export const geminiEmbedding = genAI.getGenerativeModel({ 
-  model: 'embedding-001' 
+  model: 'text-embedding-004' 
 })
 
 export async function getEmbedding(text: string) {

@@ -59,7 +59,7 @@ export const ourFileRouter = {
         
         // ✅ FIXED: Use the correct Gemini embedding model
         const aiModel = genAI.getGenerativeModel({ 
-          model: "embedding-001"  // Correct Gemini embedding model
+          model: "text-embedding-004"  // Correct Gemini embedding model
         });
         
         const embeddings = await Promise.all(

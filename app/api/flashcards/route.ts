@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     
     // Query with a dummy vector to get all chunks
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
-    const embeddingModel = genAI.getGenerativeModel({ model: "embedding-001" });
+    const embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
     
     const dummyEmbedding = await embeddingModel.embedContent("sample");
     const dummyVector = dummyEmbedding.embedding.values;
