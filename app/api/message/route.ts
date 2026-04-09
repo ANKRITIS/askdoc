@@ -85,7 +85,7 @@ ANSWER:`;
     // 6. Generate the Answer
     console.log("🤖 Generating AI response...");
     const chatModel = genAI.getGenerativeModel({ 
-      model: process.env.GEMINI_MODEL || "gemini-2.5-flash"
+      model: process.env.GEMINI_MODEL || "gemini-1.5-flash"
     });
     
     const result = await chatModel.generateContent(prompt);

@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 
     // Generate flashcards using AI
     const chatModel = genAI.getGenerativeModel({ 
-      model: process.env.GEMINI_MODEL || "gemini-2.5-flash" 
+      model: process.env.GEMINI_MODEL || "gemini-1.5-flash" 
     });
 
     const prompt = `You are a helpful tutor creating study flashcards from document content.
